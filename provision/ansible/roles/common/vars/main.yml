@@ -1,0 +1,8 @@
+---
+apt_packages:
+  - git
+  - python-pip
+  - vim
+pip_packages:
+  - pip
+  - virtualenv

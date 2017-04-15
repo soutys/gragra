@@ -1,0 +1,26 @@
+---
+- name: graphite-gw | pull repository content
+  become: yes
+  git: >
+    repo=git://github.com/soutys/graphite-gw
+    dest=/var/tmp/graphite-gw
+    update=yes
+    depth=1
+
+- name: graphite-gw | copy lua script(s)
+  become: yes
+  shell: >
+    cp -r /var/tmp/graphite-gw/nginx/lua /etc/nginx
+  args:
+    creates: "/etc/nginx/lua/graphite-gw.lua"
+
+- name: graphite-gw | Install graphite collector configuration file
+  become: yes
+  template: >
+    src=collector.conf.j2
+    dest=/etc/nginx/collector.conf
+
+- name: nginx | reload server
+  become: yes
+  service: name=nginx state=reloaded
+

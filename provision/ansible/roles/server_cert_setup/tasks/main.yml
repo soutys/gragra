@@ -1,0 +1,8 @@
+---
+- name: Certificates | create server cert
+  become: yes
+  shell: export CA_CONF_PATH="{{ package_data|quote }}/scripts/certs" && export CA_CN="{{ hostname }}" && "{{ package_data|quote }}/scripts/certs/server_cert_create.sh"
+  args:
+    chdir: "{{ certs_root }}"
+    creates: "{{ certs_root }}/CAs/certs/server.cert.pem"
+

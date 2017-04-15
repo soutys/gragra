@@ -1,0 +1,51 @@
+---
+- name: CAs | create root dir
+  become: yes
+  file: >
+    path="{{ certs_root }}"
+    state=directory
+    mode=0700
+
+- name: CAs | initialize environment
+  become: yes
+  shell: "{{ package_data|quote }}/scripts/certs/env_prepare.sh"
+  args:
+    chdir: "{{ certs_root }}"
+    creates: "{{ certs_root|quote }}/.env_ready"
+
+- name: CAs | create root and intermediate
+  become: yes
+  shell: export CA_CONF_PATH="{{ package_data|quote }}/scripts/certs" && export CA_CN_ROOT="Something Something Ltd. Root CA" && export CA_CN_INTERM="Something Something Ltd. Interm. CA" && "{{ package_data|quote }}/scripts/certs/CAs_create.sh"
+  args:
+    chdir: "{{ certs_root }}"
+    creates: "{{ certs_root }}/CAs/certs/ca-chain.cert.pem"
+
+- name: CAs | create SSL certs dir
+  become: yes
+  file: >
+    path="/usr/local/share/ca-certificates"
+    state=directory
+    mode=0755
+
+- name: CAs | register certs
+  become: yes
+  shell: cp "{{ certs_root|quote }}/CAs/certs/ca_root.cert.pem" "{{ store_path|quote }}/{{ hostname|quote }}-ca-root.crt" && cp "{{ certs_root|quote }}/CAs/certs/ca_interm.cert.pem" "{{ store_path|quote }}/{{ hostname|quote }}-ca-interm.crt" && update-ca-certificates
+  args:
+    creates: "/etc/ssl/certs/{{ hostname }}-ca-interm.pem"
+
+- name: Certificates | pull CA root cert
+  become: yes
+  fetch:
+    src="{{ certs_root }}/CAs/certs/ca_root.cert.pem"
+    dest="{{ lookup('env', 'PWD') }}/"
+    fail_on_missing=yes
+    flat=yes
+
+- name: Certificates | pull CA interm cert
+  become: yes
+  fetch:
+    src="{{ certs_root }}/CAs/certs/ca_interm.cert.pem"
+    dest="{{ lookup('env', 'PWD') }}/"
+    fail_on_missing=yes
+    flat=yes
+

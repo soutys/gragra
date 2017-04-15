@@ -1,0 +1,33 @@
+	# https://calomel.org/nginx.html
+
+	client_body_buffer_size  10m;
+	client_header_buffer_size  8k;
+	client_max_body_size  50m;
+	large_client_header_buffers  8  4k;
+
+	connection_pool_size  256;
+	request_pool_size  8k;
+
+	output_buffers  1  32k;
+	postpone_output 1460;
+
+	client_body_timeout  10;
+	client_header_timeout  10;
+	send_timeout  10;
+
+	ignore_invalid_headers  on;
+	keepalive_disable  none;
+	max_ranges  1;
+
+	msie_padding  off;
+	open_file_cache  max=1000 inactive=2h;
+	open_file_cache_errors  on;
+	open_file_cache_min_uses  1;
+	open_file_cache_valid  1h;
+
+	read_ahead  512K;
+	recursive_error_pages  on;
+	reset_timedout_connection  on;
+	server_name_in_redirect  off;
+
+	limit_conn_zone $binary_remote_addr zone=addr:10m;

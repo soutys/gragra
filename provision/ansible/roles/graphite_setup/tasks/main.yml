@@ -1,0 +1,190 @@
+---
+- name: graphite | base directory
+  become: yes
+  file: >
+    path="{{ graphite_base_path }}"
+    state=directory
+    owner={{ www_user }}
+    group={{ www_group }}
+    mode=0755
+
+- name: graphite | auths directory
+  become: yes
+  become_user: "{{ www_user }}"
+  file: >
+    path="{{ graphite_base_path }}/auths"
+    state=directory
+    mode=0700
+
+- name: graphite | system requirements
+  become: yes
+  with_items: "{{ apt_packages }}"
+  apt: >
+    name="{{ item }}"
+    state=latest
+
+- name: graphite | pip virtualenv + requirements
+  become: yes
+  become_user: "{{ www_user }}"
+  with_items: "{{ pip_packages }}"
+  pip: >
+    state=present
+    virtualenv="{{ graphite_base_path }}/venv"
+    virtualenv_python=python2
+    name="{{ item }}"
+    extra_args="--cache-dir /var/tmp"
+
+- name: graphite | install graphite-web + carbon + whisper
+  become: yes
+  become_user: "{{ www_user }}"
+  with_items:
+    - graphite-web
+    - carbon
+    - whisper
+  pip: >
+    state=present
+    virtualenv="{{ graphite_base_path }}/venv"
+    extra_args="--cache-dir /var/tmp --upgrade --install-option=\"--prefix={{ graphite_base_path }}/venv\" --install-option=\"--install-lib={{ graphite_base_path }}/venv/lib/python2.7/site-packages\" --install-option=\"--install-data={{ graphite_base_path }}\" --install-option=\"--install-scripts={{ graphite_base_path }}/bin\""
+    editable=false
+    name="git+https://github.com/graphite-project/{{ item }}.git#egg={{ item }}"
+
+- name: graphite | clean configs
+  become: yes
+  become_user: "{{ www_user }}"
+  with_items:
+    - aggregation-rules.conf
+    - carbon.conf
+    - dashboard.conf
+    - graphite.wsgi
+    - graphTemplates.conf
+    - storage-aggregation.conf
+    - storage-schemas.conf
+  template: >
+    src="graphite_confs/{{ item }}.j2"
+    dest="{{ graphite_base_path }}/conf/{{ item }}"
+    mode=0644
+    force=yes
+
+- name: graphite | modified configs
+  become: yes
+  become_user: "{{ www_user }}"
+  with_items:
+    - local_settings.py
+  template: >
+    src="{{ item }}.j2"
+    dest="{{ graphite_base_path }}/venv/lib/python2.7/site-packages/graphite/{{ item }}"
+    mode=0644
+    force=yes
+
+- name: graphite | modules patching
+  become: yes
+  become_user: "{{ www_user }}"
+  with_items:
+    - carbon/util.py
+  lineinfile:
+    dest="{{ graphite_base_path }}/venv/lib/python2.7/site-packages/{{ item }}"
+    state=absent
+    regexp='twistd_options\.append\("--reactor=epoll"\)$'
+
+- name: graphite | storage & log directories
+  become: yes
+  with_items:
+    - carbon
+    - webapp
+  file: >
+    path="{{ graphite_storage_path }}/log/{{ item }}"
+    state=directory
+    owner={{ www_user }}
+    group={{ www_group }}
+    mode=0755
+    recurse=no
+
+- name: graphite | storage directory ownership
+  become: yes
+  file: >
+    path="{{ graphite_storage_path }}"
+    state=directory
+    owner={{ www_user }}
+    group={{ www_group }}
+    mode=0755
+    recurse=no
+
+- name: graphite | django secret key regeneration
+  become: yes
+  become_user: "{{ www_user }}"
+  shell: >
+    {{ package_data|quote }}/scripts/django_recreate_secret_key.py {{ graphite_base_path }}/auths/secret_key.dat
+  args:
+    creates: "{{ graphite_base_path }}/auths/secret_key.dat"
+
+- name: django | link django/bin items
+  become: yes
+  become_user: "{{ www_user }}"
+  with_items:
+    - django-admin.py
+  file: >
+    src="{{ graphite_base_path }}/venv/lib/python2.7/site-packages/django/bin/{{ item }}"
+    path="{{ graphite_base_path }}/venv/bin/{{ item }}"
+    state=link
+
+- name: graphite | django | create DB migrations (1)
+  become: yes
+  become_user: "{{ www_user }}"
+  shell: >
+    BASE_PATH="{{ graphite_base_path }}" STORAGE_DIR="{{ graphite_storage_path }}" DJANGO_SETTINGS_MODULE=graphite.settings {{ graphite_base_path }}/venv/bin/python {{ graphite_base_path }}/venv/bin/django-admin.py \
+        makemigrations \
+        account browser composer dashboard events \
+        metrics render url_shortener whitelist \
+        tagging
+  args:
+    creates: "{{ graphite_base_path }}/venv/lib/python2.7/site-packages/graphite/dashboard/migrations/0001_initial.py"
+
+- name: graphite | django | create DB migrations (2)
+  become: yes
+  become_user: "{{ www_user }}"
+  shell: >
+    BASE_PATH="{{ graphite_base_path }}" STORAGE_DIR="{{ graphite_storage_path }}" DJANGO_SETTINGS_MODULE=graphite.settings {{ graphite_base_path }}/venv/bin/python {{ graphite_base_path }}/venv/bin/django-admin.py \
+        makemigrations
+  args:
+    creates: "{{ graphite_base_path }}/venv/lib/python2.7/site-packages/graphite/dashboard/migrations/0002_template.py"
+
+- name: graphite | django | DB migration
+  become: yes
+  become_user: "{{ www_user }}"
+  shell: >
+    BASE_PATH="{{ graphite_base_path }}" STORAGE_DIR="{{ graphite_storage_path }}" DJANGO_SETTINGS_MODULE=graphite.settings {{ graphite_base_path }}/venv/bin/python {{ graphite_base_path }}/venv/bin/django-admin.py \
+        migrate
+
+- name: graphite | django | collect static files
+  become: yes
+  become_user: "{{ www_user }}"
+  shell: >
+    BASE_PATH="{{ graphite_base_path }}" STORAGE_DIR="{{ graphite_storage_path }}" DJANGO_SETTINGS_MODULE=graphite.settings {{ graphite_base_path }}/venv/bin/python {{ graphite_base_path }}/venv/bin/django-admin.py \
+        collectstatic --traceback --noinput --clear --link
+  args:
+    creates: "{{ graphite_base_path }}/static"
+
+- name: "graphite | services' units"
+  become: yes
+  with_items:
+    - carbon-cache
+    - carbon-aggregator
+    - graphite-web
+  template: >
+    src="services/{{ item }}.service.j2"
+    dest="/lib/systemd/system/{{ item }}.service"
+    mode=0644
+    force=yes
+
+- name: "graphite | systemd units start + enable"
+  become: yes
+  with_items:
+    - carbon-cache
+    - carbon-aggregator
+    - graphite-web
+  systemd: >
+    daemon_reload=yes
+    name="{{ item }}"
+    state=started
+    enabled=yes
+

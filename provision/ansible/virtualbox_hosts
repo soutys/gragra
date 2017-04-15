@@ -1,0 +1,1 @@
+graphite-host-vbox  ansible_user=vagrant  ansible_host=192.168.33.1  ansible_port=2222

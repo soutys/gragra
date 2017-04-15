@@ -1,0 +1,16 @@
+---
+apt_packages:
+  - libcairo2
+  - libffi-dev
+  - uwsgi
+  - uwsgi-plugin-python
+pip_packages:
+  - cairocffi
+  - django
+  - django-tagging
+  - pip
+  - pyparsing
+  - pytz
+  - scandir
+  - twisted
+  - uwsgi

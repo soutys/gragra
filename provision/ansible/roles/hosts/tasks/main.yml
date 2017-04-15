@@ -1,0 +1,8 @@
+---
+- name: hostname(s) setup
+  hostname: name="{{ hostname }}"
+  become: yes
+
+- name: /etc/hosts update
+  template: src=hosts.j2 dest=/etc/hosts
+  become: yes

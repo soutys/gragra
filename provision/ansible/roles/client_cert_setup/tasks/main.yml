@@ -1,0 +1,31 @@
+---
+- name: Certificates | create client cert
+  become: yes
+  shell: export CA_CONF_PATH="{{ package_data|quote }}/scripts/certs" && export CA_CN="{{ cert_client }}@{{ hostname }}" && "{{ package_data|quote }}/scripts/certs/client_cert_create.sh"
+  args:
+    chdir: "{{ certs_root }}"
+    creates: "{{ certs_root }}/CAs/certs/client.cert.pem"
+
+- name: Certificates | pull client cert
+  become: yes
+  fetch:
+    src="{{ certs_root }}/CAs/certs/client.cert.pem"
+    dest="{{ lookup('env', 'PWD') }}/"
+    fail_on_missing=yes
+    flat=yes
+
+- name: Certificates | create unprotected client key
+  become: yes
+  shell: "openssl rsa -in {{ certs_root }}/CAs/private/client.key.pem -passin file:{{ certs_root }}/CAs/private/client.key.passwd -out {{ certs_root }}/CAs/private/client-nopasswd.key.pem"
+  args:
+    chdir: "{{ certs_root }}"
+    creates: "{{ certs_root }}/CAs/private/client-nopasswd.key.pem"
+
+- name: Certificates | pull unprotected client key
+  become: yes
+  fetch:
+    src="{{ certs_root }}/CAs/private/client-nopasswd.key.pem"
+    dest="{{ lookup('env', 'PWD') }}/"
+    fail_on_missing=yes
+    flat=yes
+

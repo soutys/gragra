@@ -1,0 +1,74 @@
+---
+- name: grafana | add repository
+  become: yes
+  apt_repository: >
+    repo="deb https://packagecloud.io/grafana/stable/debian/ jessie main"
+    state=present
+
+- name: grafana | add gpg key
+  become: yes
+  apt_key: >
+    url="https://packagecloud.io/gpg.key"
+    state=present
+
+- name: grafana | install package
+  become: yes
+  apt: >
+    name=grafana
+    state=latest
+    allow_unauthenticated=yes
+
+- name: grafana | create admin password (1)
+  become: yes
+  shell: >
+    {{ package_data|quote }}/scripts/django_recreate_secret_key.py "{{ grafana.conf_path|quote }}/admin_passwd.dat"
+  args:
+    creates: "{{ grafana.conf_path|quote }}/admin_passwd.dat"
+
+- name: grafana | create admin password (2)
+  become: yes
+  shell: cat "{{ grafana.conf_path|quote }}/admin_passwd.dat"
+  register: grafana_admin_passwd
+
+- name: grafana | create secret key (1)
+  become: yes
+  shell: >
+    {{ package_data|quote }}/scripts/django_recreate_secret_key.py "{{ grafana.conf_path|quote }}/secret_key.dat"
+  args:
+    creates: "{{ grafana.conf_path|quote }}/secret_key.dat"
+
+- name: grafana | create secret key (2)
+  become: yes
+  shell: cat "{{ grafana.conf_path|quote }}/secret_key.dat"
+  register: grafana_secret_key
+
+- name: grafana | add environment variables
+  become: yes
+  template: >
+    src=grafana-server.env.j2
+    dest="/etc/default/grafana-server"
+
+- name: grafana | add plugins dir
+  become: yes
+  file: >
+    path="/var/lib/grafana/plugins"
+    state=directory
+    owner=grafana
+    group=grafana
+    mode=0755
+    recurse=no
+
+- name: grafana | add server configuration
+  become: yes
+  template: >
+    src=grafana.ini.j2
+    dest="{{ grafana.conf_path }}/grafana.ini"
+
+- name: grafana | enable service and check if server is running
+  become: yes
+  systemd: >
+    daemon_reload=yes
+    name=grafana-server
+    state=restarted
+    enabled=yes
+

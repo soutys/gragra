@@ -1,0 +1,27 @@
+---
+- hosts: all
+  vars:
+    package_data: /opt/package_data
+    certs_root: /root/certs
+    hostname: "{{ lookup('env', 'GRAPHITE_COLLECTOR_HOST') }}"
+    store_path: /usr/local/share/ca-certificates
+    cert_client: "{{ lookup('env', 'CERT_CLIENT') }}"
+    www_user: www-data
+    www_group: www-data
+    www_root: /var/empty
+    log_dir: /var/log
+    graphite_base_path: /opt/graphite
+    graphite_storage_path: /var/lib/graphite/storage
+    graphite_socket: 127.0.0.1:9000
+    grafana:
+      conf_path: /etc/grafana
+      admin_username: grafana-admin
+  roles:
+    - common
+    - ca_setup
+    - server_cert_setup
+    - client_cert_setup
+    - nginx_setup
+    - graphite_setup
+    - grafana_setup
+    - gateway_setup

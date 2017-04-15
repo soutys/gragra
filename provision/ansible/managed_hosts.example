@@ -1,0 +1,1 @@
+graphite-host-vps  ansible_user=youruser  ansible_port=22

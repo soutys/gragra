@@ -1,0 +1,67 @@
+---
+- name: commons | update apt cache
+  become: yes
+  apt: >
+    update_cache=true
+
+- name: commons | install packages with apt
+  with_items: "{{ apt_packages }}"
+  become: yes
+  apt: >
+    name="{{ item }}"
+    state=latest
+
+- name: commons | install packages with pip
+  become: yes
+  with_items: "{{ pip_packages }}"
+  pip: >
+    name="{{ item }}"
+    state=latest
+    use_mirrors=no
+
+- with_items:
+    - pl_PL.UTF-8
+    - en_US.UTF-8
+  become: yes
+  locale_gen:
+    name: "{{ item }}"
+    state: present
+
+- name: 'Generate default locale'
+  become: yes
+  shell: locale > /etc/default/locale
+  args:
+    creates: "/etc/default/locale"
+
+- name: 'Set timezone to UTC (1)'
+  become: yes
+  file:
+    src=/usr/share/zoneinfo/UTC
+    dest=/etc/localtime
+    state=link
+    force=yes
+
+- name: 'Set timezone to UTC (2)'
+  become: yes
+  lineinfile: dest=/etc/timezone line='Etc/UTC' regexp='.*' state=present
+
+- name: 'Set timezone to UTC (3)'
+  become: yes
+  shell: dpkg-reconfigure --frontend noninteractive tzdata
+
+- name: 'Set timezone for environment'
+  become: yes
+  lineinfile: dest=/etc/profile.d/tz.sh line='export TZ=:/etc/localtime' state=present create=yes mode=0644
+
+- name: 'Set default locale LC_ALL to UTF-8'
+  become: yes
+  lineinfile: dest=/etc/environment line='LC_ALL="en_US.UTF-8"' regexp='^LC_ALL=' state=present insertafter=BOF
+
+- name: 'Set default locale LANG to UTF-8'
+  become: yes
+  lineinfile: dest=/etc/default/locale line='LANG="en_US.UTF-8"' regexp='^LANG=' state=present insertafter=BOF
+
+- name: 'Set other default locales to UTF-8'
+  become: yes
+  replace: dest=/etc/default/locale regexp='(LANG[^=]*|LC[^=]+)=.*' replace='\1="en_US.UTF-8"'
+

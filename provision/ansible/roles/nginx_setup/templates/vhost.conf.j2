@@ -1,0 +1,81 @@
+upstream upstream_graphite_web {
+	server  {{ graphite_socket }};
+}
+
+
+server {
+	server_name  {{ hostname }};
+
+	include  sites_common_params;
+
+	root  {{ www_root }};
+	index  index.html  index.htm;
+
+	ssl_certificate  ssl_certs/server.cert.pem;
+	ssl_certificate_key  ssl_certs/server.key.pem;
+	add_header  Public-Key-Pins  'pin-sha256="{{ http_pubkey_pin.stdout }}"; max-age=2592000; includeSubDomains';
+
+	ssl_client_certificate  ssl_certs/ca-chain.cert.pem;
+	ssl_verify_client  optional;
+	ssl_verify_depth  2;
+
+	access_log  {{ log_dir }}/nginx/nginx.access.log  timed_combined  buffer=4k;
+	error_log  {{ log_dir }}/nginx/nginx.error.log;
+
+	location /graphite/collector/ {
+		default_type  'text/plain';
+		set  $graphite_gw_prefix  '';
+		set  $graphite_address  '127.0.0.1';
+		set  $graphite_port  '2003';
+		set  $graphite_timeout '1000';
+		set  $log_graphite_out  '0';
+		content_by_lua_file  '/etc/nginx/lua/graphite-gw.lua';
+	}
+
+	location /graphite/static/ {
+		root /opt;
+		try_files  $uri  $uri/index.html  $uri.html  =404;
+		autoindex off;
+	}
+
+	location /graphite/ {
+		try_files  $uri  $uri/  @graphite_web;
+	}
+
+	location /grafana/ {
+		proxy_read_timeout  300;
+		proxy_connect_timeout  300;
+		proxy_redirect  off;
+
+		proxy_set_header  X-Forwarded-Proto  $scheme;
+		proxy_set_header  Host  $http_host;
+		proxy_set_header  X-Real-IP  $remote_addr;
+
+		add_header  Access-Control-Allow-Origin  "*";
+		add_header  Access-Control-Allow-Headers  "origin, x-requested-with, content-type";
+		add_header  Access-Control-Allow-Methods  "PUT, GET, POST, DELETE, OPTIONS";
+
+		proxy_pass  http://127.0.0.1:3000/;
+	}
+
+	location @graphite_web {
+		proxy_read_timeout  300;
+		proxy_connect_timeout  300;
+		proxy_redirect  off;
+
+		proxy_set_header  X-Forwarded-Proto  $scheme;
+		proxy_set_header  Host  $http_host;
+		proxy_set_header  X-Real-IP  $remote_addr;
+
+		add_header  Access-Control-Allow-Origin  "*";
+		add_header  Access-Control-Allow-Headers  "origin, x-requested-with, content-type";
+		add_header  Access-Control-Allow-Methods  "PUT, GET, POST, DELETE, OPTIONS";
+
+		uwsgi_pass  upstream_graphite_web;
+		include	 uwsgi_params;
+	}
+
+	location / {
+		try_files  $uri  $uri/index.html  $uri.html  =404;
+	}
+}

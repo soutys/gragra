@@ -1,0 +1,10 @@
+	location /graphite/collector/ {
+		default_type  'text/plain';
+		set  $graphite_gw_prefix  '';
+		set  $graphite_address  '127.0.0.1';
+		set  $graphite_port  '2003';
+		set  $graphite_timeout '1000';
+		set  $log_graphite_out  '0';
+		content_by_lua_file  '/etc/nginx/lua/graphite-gw.lua';
+	}
+

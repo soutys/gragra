@@ -1,0 +1,19 @@
+[Unit]
+Description=Carbon cache daemon
+After=network.target
+
+[Service]
+Type=forking
+User={{ www_user }}
+Group={{ www_group }}
+WorkingDirectory={{ graphite_storage_path }}
+Environment="GRAPHITE_ROOT={{ graphite_base_path }}"
+Environment="GRAPHITE_STORAGE_DIR={{ graphite_storage_path }}"
+ExecStart={{ graphite_base_path }}/bin/carbon-cache.py \
+	--config={{ graphite_base_path }}/conf/carbon.conf \
+	--logdir={{ graphite_storage_path }}/log/carbon \
+	--instance=instance-0001 \
+	start
+
+[Install]
+WantedBy=multi-user.target

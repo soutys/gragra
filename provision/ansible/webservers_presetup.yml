@@ -1,0 +1,16 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  pre_tasks:
+    - name: pre-tasks | install python 2.x
+      raw: apt-get -y install acl apt-transport-https python-simplejson haveged systemd && service haveged start
+
+- hosts: all
+  become: yes
+  tasks:
+    - name: synchronizing package data
+      synchronize: >
+        src=package_data
+        dest="/opt"
+

@@ -1,0 +1,33 @@
+[Unit]
+Description=Graphite web app
+After=network.target
+
+[Service]
+Type=simple
+User={{ www_user }}
+Group={{ www_group }}
+ExecStart=/usr/bin/uwsgi \
+  --uid {{ www_user }} \
+  --gid {{ www_group }} \
+  --protocol uwsgi \
+  --socket {{ graphite_socket }} \
+  --logto {{ graphite_storage_path }}/log/webapp/graphite-web.log \
+  --touch-logreopen {{ graphite_storage_path }}/log/webapp/graphite-web-log.touch \
+  --plugin python \
+  --home {{ graphite_base_path }}/venv \
+  --env BASE_PATH={{ graphite_base_path }} \
+  --env STORAGE_DIR={{ graphite_storage_path }} \
+  --env DJANGO_SETTINGS_MODULE=graphite.settings \
+  --module graphite.wsgi:application \
+  --master \
+  --processes 4 \
+  --enable-threads \
+  --stats 127.0.0.1:1717 \
+  --stats-http \
+  --memory-report \
+  --buffer-size 32768 \
+  --max-requests 1000
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

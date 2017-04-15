@@ -1,0 +1,128 @@
+---
+- name: nginx | install package
+  become: yes
+  apt: >
+    name=nginx-extras
+    state=latest
+
+- name: nginx | remove default nginx site
+  become: yes
+  file: >
+    path=/etc/nginx/sites-enabled/default
+    state=absent
+
+- name: nginx | start server
+  become: yes
+  service: name=nginx enabled=yes state=started
+
+- name: nginx | add empty dir
+  become: yes
+  file: >
+    path=/var/empty
+    state=directory
+    mode=0755
+
+- name: nginx | create Diffie-Hellman parameters file
+  become: yes
+  shell: openssl dhparam -rand /dev/random -out ./dhparams.pem 2048
+  args:
+    chdir: "/etc/nginx"
+    creates: "/etc/nginx/dhparams.pem"
+
+- name: nginx | change Diffie-Hellman parameters file
+  become: yes
+  file: >
+    dest="/etc/nginx/dhparams.pem"
+    owner={{ www_user }}
+    group={{ www_group }}
+    mode=0640
+
+- name: nginx | create SSL certificate dir
+  become: yes
+  file: >
+    dest="/etc/nginx/ssl_certs"
+    state=directory
+    owner={{ www_user }}
+    group={{ www_group }}
+    mode=0750
+
+- name: nginx | merge SSL certificates
+  become: yes
+  shell: cat "server.cert.pem" "ca-chain.cert.pem" > /etc/nginx/ssl_certs/server.cert.pem
+  args:
+    chdir: "{{ certs_root|quote }}/CAs/certs"
+    creates: "/etc/nginx/ssl_certs/server.key.pem"
+
+- name: nginx | transfer SSL certificates
+  become: yes
+  shell: cp ca-chain.cert.pem /etc/nginx/ssl_certs/
+  args:
+    chdir: "{{ certs_root|quote }}/CAs/certs"
+    creates: "/etc/nginx/ssl_certs/ca-chain.cert.pem"
+
+- name: nginx | install SSL key (1)
+  become: yes
+  shell: openssl rsa -in {{ certs_root|quote }}/CAs/private/server.key.pem -passin file:{{ certs_root|quote }}/CAs/private/server.key.passwd -out /etc/nginx/ssl_certs/server.key.pem
+  args:
+    creates: "/etc/nginx/ssl_certs/server.key.pem"
+
+- name: nginx | install SSL key (2)
+  become: yes
+  file: >
+    dest="/etc/nginx/ssl_certs/server.key.pem"
+    owner={{ www_user }}
+    group={{ www_group }}
+    mode=0640
+
+- name: nginx | chown + chmod SSL certificates directory
+  become: yes
+  file: >
+    dest="/etc/nginx/ssl_certs"
+    owner={{ www_user }}
+    group={{ www_group }}
+    mode=u+rw,g+r,o-rwx
+
+- name: nginx | install logging configuration file
+  become: yes
+  template: >
+    src=http.logging.conf.j2
+    dest=/etc/nginx/conf.d/http.logging.conf
+
+- name: nginx | install hardening configuration file
+  become: yes
+  template: >
+    src=hardening.conf.j2
+    dest=/etc/nginx/conf.d/hardening.conf
+
+- name: nginx | install common parameters configuration file
+  become: yes
+  template: >
+    src=sites_common_params.conf.j2
+    dest=/etc/nginx/sites_common_params
+
+- name: nginx | install SSL parameters configuration file
+  become: yes
+  template: >
+    src=ssl_params.conf.j2
+    dest=/etc/nginx/ssl_params
+
+- name: nginx | calculate HTTP pubkey PIN
+  become: yes
+  shell: openssl x509 -pubkey < /etc/nginx/ssl_certs/server.cert.pem | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64
+  register: http_pubkey_pin
+
+- name: nginx | Install graphite collector stub configuration file
+  become: yes
+  template: >
+    src=collector.conf.j2
+    dest=/etc/nginx/collector.conf
+
+- name: nginx | Install site configuration file
+  become: yes
+  template: >
+    src=vhost.conf.j2
+    dest=/etc/nginx/sites-enabled/{{ hostname }}
+
+- name: nginx | reload server
+  become: yes
+  service: name=nginx state=reloaded

@@ -1,0 +1,13 @@
+---
+- name: carbon-cache
+  become: yes
+  service: name=carbon-cache state=restarted
+
+- name: carbon-aggregator
+  become: yes
+  service: name=carbon-aggregator state=restarted
+
+- name: graphite-web
+  become: yes
+  service: name=graphite-web state=restarted
+
