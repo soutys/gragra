@@ -1,8 +1,11 @@
 ---
-- name: nginx | install package
+- name: nginx | install packages
   become: yes
+  with_items:
+    - lua-zlib
+    - nginx-extras
   apt: >
-    name=nginx-extras
+    name={{ item }}
     state=latest
 
 - name: nginx | remove default nginx site

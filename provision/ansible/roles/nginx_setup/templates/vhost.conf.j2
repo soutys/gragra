@@ -23,12 +23,16 @@ server {
 	error_log  {{ log_dir }}/nginx/nginx.error.log;
 
 	location /graphite/collector/ {
+		client_max_body_size  512k;
+		client_body_buffer_size  512k;
 		default_type  'text/plain';
 		set  $graphite_gw_prefix  '';
 		set  $graphite_address  '127.0.0.1';
 		set  $graphite_port  '2003';
 		set  $graphite_timeout '1000';
 		set  $log_graphite_out  '0';
+		set  $max_chunk_size  10240;
+		set  $max_body_size  524288;
 		content_by_lua_file  '/etc/nginx/lua/graphite-gw.lua';
 	}
 
