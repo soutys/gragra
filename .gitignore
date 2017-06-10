@@ -1,5 +1,6 @@
 .vagrant/
 *console.log
+*.p12
 *.passwd
 *.pem
 vagrant-*-public-key*

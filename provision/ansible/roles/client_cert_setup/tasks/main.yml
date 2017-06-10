@@ -29,3 +29,17 @@
     fail_on_missing=yes
     flat=yes
 
+- name: 'Certificates | create exported PKCS#12 client cert'
+  become: yes
+  shell: "openssl pkcs12 -export -nodes -passout pass: -clcerts -in {{ certs_root }}/CAs/certs/client.cert.pem -inkey {{ certs_root }}/CAs/private/client-nopasswd.key.pem -out {{ certs_root }}/CAs/private/client.cert.p12"
+  args:
+    chdir: "{{ certs_root }}"
+    creates: "{{ certs_root }}/CAs/private/client.cert.p12"
+
+- name: 'Certificates | pull exported PKCS#12 client cert'
+  become: yes
+  fetch:
+    src="{{ certs_root }}/CAs/private/client.cert.p12"
+    dest="{{ lookup('env', 'PWD') }}/"
+    fail_on_missing=yes
+    flat=yes
