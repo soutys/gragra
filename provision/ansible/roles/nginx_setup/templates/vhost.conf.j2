@@ -16,7 +16,7 @@ server {
 	add_header  Public-Key-Pins  'pin-sha256="{{ http_pubkey_pin.stdout }}"; max-age=2592000; includeSubDomains';
 
 	ssl_client_certificate  ssl_certs/ca-chain.cert.pem;
-	ssl_verify_client  optional;
+	ssl_verify_client  on;
 	ssl_verify_depth  2;
 
 	access_log  {{ log_dir }}/nginx/nginx.access.log  timed_combined  buffer=4k;
@@ -44,6 +44,11 @@ server {
 
 	location /graphite/ {
 		try_files  $uri  $uri/  @graphite_web;
+	}
+
+	location /grafana/public/ {
+		root  /usr/share;
+		try_files  $uri  $uri/  =404;
 	}
 
 	location /grafana/ {
