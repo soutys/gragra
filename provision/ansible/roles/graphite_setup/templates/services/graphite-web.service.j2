@@ -22,12 +22,21 @@ ExecStart=/usr/bin/uwsgi \
   --master \
   --processes 4 \
   --enable-threads \
+  --thunder-lock \
   --stats 127.0.0.1:1717 \
   --stats-http \
-  --memory-report \
   --buffer-size 32768 \
-  --max-requests 1000
+  --lazy-apps \
+  --listen 128 \
+  --max-requests 1000 \
+  --die-on-term
+SyslogIdentifier=graphite-web
+KillMode=control-group
+KillSignal=SIGTERM
 TimeoutStopSec=5
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=0 SIGTERM
 
 [Install]
 WantedBy=multi-user.target
