@@ -1,5 +1,5 @@
 ---
-- name: "graphite-host"
+- name: "graphite-host-vps"
   box:
     managed: "tknerr/managed-server-dummy"
     virtualbox: "ubuntu/xenial64"
