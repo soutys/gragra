@@ -76,6 +76,21 @@
     mode=0644
     force=yes
 
+- name: graphite | find example configs
+  become: yes
+  find: >
+    paths="{{ graphite_base_path }}/conf"
+    patterns="*.example"
+  register: files_to_delete
+
+- name: graphite | remove example configs
+  become: yes
+  file: >
+    path="{{ item.path }}"
+    state=absent
+    recurse=no
+  with_items: "{{ files_to_delete.files }}"
+
 - name: graphite | modules patching
   become: yes
   become_user: "{{ www_user }}"
@@ -117,16 +132,6 @@
   args:
     creates: "{{ graphite_base_path }}/auths/secret_key.dat"
 
-- name: django | link django/bin items
-  become: yes
-  become_user: "{{ www_user }}"
-  with_items:
-    - django-admin.py
-  file: >
-    src="{{ graphite_base_path }}/venv/lib/python2.7/site-packages/django/bin/{{ item }}"
-    path="{{ graphite_base_path }}/venv/bin/{{ item }}"
-    state=link
-
 - name: graphite | django | create DB migrations (1)
   become: yes
   become_user: "{{ www_user }}"
@@ -163,6 +168,14 @@
         collectstatic --traceback --noinput --clear --link
   args:
     creates: "{{ graphite_base_path }}/static"
+
+- name: graphite | logrotate config
+  become: yes
+  template: >
+    src="logrotate.j2"
+    dest="/etc/logrotate.d/graphite"
+    mode=0644
+    force=yes
 
 - name: "graphite | services' units"
   become: yes

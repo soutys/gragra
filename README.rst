@@ -16,10 +16,19 @@ Common setup
 
 .. code:: bash
 
+    # managing server
     export GRAPHITE_COLLECTOR_HOST=...
     export GRAPHITE_COLLECTOR_PORT=...
     export CERT_CLIENT=...
     export MANAGED_SSH_PORT=...
+    ssh-add ~/.ssh/deploy_user_priv_key.pem
+    # modify ~/.ssh/config
+
+    # managed server
+    adduser deploy_user
+    addgroup ssh_users
+    adduser deploy_user ssh_users
+    # modify sshd config
 
 
 Development

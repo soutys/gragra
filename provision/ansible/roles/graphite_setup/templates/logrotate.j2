@@ -1,0 +1,14 @@
+{{ graphite_storage_path }}/log/webapp/*.log {
+	su www-data www-data
+	daily
+	missingok
+	rotate 14
+	compress
+	delaycompress
+	notifempty
+	create 0644 www-data www-data
+	sharedscripts
+	postrotate
+		bash -c 'touch {{ graphite_storage_path }}/log/webapp/*-log.touch'
+	endscript
+}
