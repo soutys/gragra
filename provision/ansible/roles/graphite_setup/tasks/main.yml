@@ -48,6 +48,34 @@
     editable=false
     name="git+https://github.com/graphite-project/{{ item }}.git#egg={{ item }}"
 
+- name: graphite | test for fix venv setup
+  become: yes
+  shell: >
+    ls -l {{ graphite_base_path }}/venv/lib/python2.7/site-packages/graphite
+  register: graphite_venv_fixed
+  ignore_errors: True
+
+- name: graphite | fix venv setup
+  become: yes
+  when: graphite_venv_fixed is failed
+  shell: >
+    mv {{ graphite_base_path }}/venv/lib/python2.7/site-packages/opt/graphite/lib/carbon {{ graphite_base_path }}/venv/lib/python2.7/site-packages/ && \
+    mv {{ graphite_base_path }}/venv/lib/python2.7/site-packages/opt/graphite/lib/twisted/plugins/* {{ graphite_base_path }}/venv/lib/python2.7/site-packages/twisted/plugins/ && \
+    mv {{ graphite_base_path }}/venv/lib/python2.7/site-packages/opt/graphite/webapp/graphite {{ graphite_base_path }}/venv/lib/python2.7/site-packages/ && \
+    mv {{ graphite_base_path }}/venv/webapp {{ graphite_base_path }}/ && \
+    rm -rf {{ graphite_base_path }}/venv/lib/python2.7/site-packages/opt/graphite
+  creates: "{{ graphite_base_path }}/venv/lib/python2.7/site-packages/graphite"
+
+- name: graphite | configs dir
+  become: yes
+  become_user: "{{ www_user }}"
+  file: >
+    path="{{ graphite_base_path }}/conf"
+    state=directory
+    owner="{{ www_user }}"
+    group="{{ www_group }}"
+    mode=0755
+
 - name: graphite | clean configs
   become: yes
   become_user: "{{ www_user }}"

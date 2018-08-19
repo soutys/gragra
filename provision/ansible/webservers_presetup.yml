@@ -4,13 +4,14 @@
   gather_facts: no
   pre_tasks:
     - name: pre-tasks | install python 2.x
-      raw: apt-get -y install acl apt-transport-https python-simplejson haveged systemd && service haveged start
+      raw: apt-get update && apt-get -y install acl apt-transport-https python-simplejson haveged systemd && service haveged start
 
 - hosts: all
   become: yes
   tasks:
-    - name: synchronizing package data
-      synchronize: >
+    - name: copying package data
+      copy: >
         src=package_data
-        dest="/opt"
+        dest=/opt/
+        mode=preserve
 

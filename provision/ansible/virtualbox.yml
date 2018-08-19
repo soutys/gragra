@@ -1,10 +1,10 @@
 ---
-- include: webservers_presetup.yml
+- import_playbook: webservers_presetup.yml
 
 - hosts: all
   roles:
     - role: hosts
       hostname: "{{ lookup('env', 'GRAPHITE_COLLECTOR_HOST') }}"
 
-- include: webservers_setup.yml
+- import_playbook: webservers_setup.yml
 

@@ -1,1 +1,2 @@
-graphite-host  ansible_user=ubuntu  ansible_host=127.0.0.1  ansible_port=2222
+[graphite-host-vm]
+graphite-host-vbox ansible_host=127.0.0.1 ansible_port=2222 ansible_ssh_common_args="-oIdentitiesOnly=yes"

@@ -1,14 +1,14 @@
 ---
-- name: grafana | add repository
-  become: yes
-  apt_repository: >
-    repo="deb https://packagecloud.io/grafana/stable/debian/ jessie main"
-    state=present
-
 - name: grafana | add gpg key
   become: yes
   apt_key: >
     url="https://packagecloud.io/gpg.key"
+    state=present
+
+- name: grafana | add repository
+  become: yes
+  apt_repository: >
+    repo="deb https://packagecloud.io/grafana/stable/debian/ stretch main"
     state=present
 
 - name: grafana | install package

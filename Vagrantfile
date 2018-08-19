@@ -9,7 +9,7 @@ Vagrant.require_version ">= 1.9.1"
 VAGRANTFILE_API_VERSION = "2"
 VAGRANTFILE_DEF_PROVIDER = "virtualbox"
 
-require "vagrant-managed-servers"
+#require "vagrant-managed-servers"
 require "yaml"
 
 machines = YAML.load_file(File.join(File.dirname(__FILE__), "machines.yml"))
@@ -38,6 +38,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                 ansible.inventory_path = "provision/ansible/" + (ENV["ANSIBLE_PROVIDER"] || VAGRANTFILE_DEF_PROVIDER) + "_hosts"
                 ansible.host_key_checking = false
                 ansible.verbose = "vv"
+                ansible.compatibility_mode = "2.0"
                 ansible.host_vars = {
                   "default" => {
                     "ansible_python_interpreter" => "/usr/bin/python2"

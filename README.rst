@@ -29,6 +29,7 @@ Common setup
     addgroup ssh_users
     adduser deploy_user ssh_users
     # modify sshd config
+    # CHECK YOUR SSH ACCESS USING 2ND SHELL BEFORE YOU LOGOUT :)
 
 
 Development

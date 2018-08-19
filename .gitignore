@@ -4,3 +4,4 @@
 *.passwd
 *.pem
 vagrant-*-public-key*
+venv
