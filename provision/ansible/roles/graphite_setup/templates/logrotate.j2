@@ -12,3 +12,19 @@
 		bash -c 'touch {{ graphite_storage_path }}/log/webapp/*-log.touch'
 	endscript
 }
+
+{{ graphite_storage_path }}/log/carbon/*.log {
+	su www-data www-data
+	daily
+	missingok
+	nocreate
+	rotate 7
+	compress
+	dateext
+	delaycompress
+	notifempty
+	sharedscripts
+	postrotate
+		bash -c 'systemctl kill --signal=HUP carbon-aggregator.service carbon-cache.service'
+	endscript
+}

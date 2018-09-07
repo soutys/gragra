@@ -103,13 +103,13 @@ UDP_RECEIVER_PORT = 2003
 # 0.0.0.0 listens on all interfaces.  Port can be set to 0 to disable this
 # listener if it is not required.
 PICKLE_RECEIVER_INTERFACE = 127.0.0.1
-PICKLE_RECEIVER_PORT = 0
+PICKLE_RECEIVER_PORT = 2004
 
 # Set the interface and port for the protobuf listener.  Setting the interface to
 # 0.0.0.0 listens on all interfaces.  Port can be set to 0 to disable this
 # listener if it is not required.
-# PROTOBUF_RECEIVER_INTERFACE = 127.0.0.1
-# PROTOBUF_RECEIVER_PORT = 0
+PROTOBUF_RECEIVER_INTERFACE = 127.0.0.1
+PROTOBUF_RECEIVER_PORT = 0
 
 # Limit the number of open connections the receiver can handle as any time.
 # Default is no limit. Setting up a limit for sites handling high volume
@@ -297,6 +297,8 @@ CARBON_METRIC_INTERVAL = 60
 # Example: store everything
 # BIND_PATTERNS = #
 
+ENABLE_TAGS = False
+
 # To configure special settings for the carbon-cache instance 'b', uncomment this:
 #[cache:b]
 #LINE_RECEIVER_PORT = 2103
@@ -315,6 +317,8 @@ LINE_RECEIVER_INTERFACE = 127.0.0.1
 LINE_RECEIVER_PORT = 2013
 PICKLE_RECEIVER_INTERFACE = 127.0.0.1
 PICKLE_RECEIVER_PORT = 2014
+ENABLE_LOGROTATION = False
+ENABLE_LOGROTATE = False
 
 # Carbon-relay has several options for metric routing controlled by RELAY_METHOD
 #
@@ -465,9 +469,10 @@ MIN_RESET_INTERVAL=121
 [aggregator]
 LINE_RECEIVER_INTERFACE = 127.0.0.1
 LINE_RECEIVER_PORT = 2023
-
 PICKLE_RECEIVER_INTERFACE = 127.0.0.1
 PICKLE_RECEIVER_PORT = 2024
+ENABLE_LOGROTATION = False
+ENABLE_LOGROTATE = False
 
 # If set true, metric received will be forwarded to DESTINATIONS in addition to
 # the output of the aggregation rules. If set false the carbon-aggregator will
