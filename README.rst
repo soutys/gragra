@@ -63,3 +63,7 @@ Tests / usage
     curl -v -X POST --cert ./client.cert.pem --key ./client-nopasswd.key.pem --data-binary @metrics.txt \
         https://${GRAPHITE_COLLECTOR_HOST}:${GRAPHITE_COLLECTOR_PORT}/graphite/collector/
 
+
+TODO
+----
+switch uWSGI to HTTP protocol to prevent graphite-web.log errors
